@@ -12,8 +12,7 @@
 import numpy as np
 import sys
 
-
-def cir_parser(filename): #esta creo que directamente tiene que funcionar
+def cir_parser(FILENAME): #esta creo que directamente tiene que funcionar
     """
         This function takes a .cir test circuit and parse it into
         4 matices.
@@ -34,7 +33,7 @@ def cir_parser(filename): #esta creo que directamente tiene que funcionar
 
     """
     componentes = []
-    with open(filename, "r") as f:
+    with open(FILENAME, "r") as f:
         for linea in f:
             linea = linea.strip()
             if not linea:
@@ -43,7 +42,6 @@ def cir_parser(filename): #esta creo que directamente tiene que funcionar
                 continue
 
             partes = linea.split()
-            print(partes)
 
             #ignorar títulos (una sola palabra)
             if len(partes) < 4:
@@ -84,67 +82,60 @@ def cir_parser(filename): #esta creo que directamente tiene que funcionar
 
         return cir_el, cir_nd, cir_val, cir_ctrl
     try:
-        cir = np.array(np.loadtxt(filename, dtype=str))
+        cir = np.array(np.loadtxt(FILENAME, dtype=str))
     except ValueError:
         sys.exit("File corrupted: .cir size is incorrect.")
 
-    # numpy usefull exmaples
-    print("================ cir ==========")
-    print(cir)
-    print("\n======== a = np.array (cir[:,1], dtype = int) ==========")
-    a = np.array(cir[:, 1], dtype=int)
-    print(a)
-    print("\n======== a = np.append(a,300) ==========")
-    a = np.append(a, 300)
-    print(a)
-    print("\n======== b = a[a > 3] ==========")
-    b = a[a > 3]
-    print(b)
-    print("\n======== c = np.unique(a) ==========")
-    c = np.unique(a)
-    print(c)
-    print("\n======== d = np.flatnonzero(a != 0) ==========")
-    d = np.flatnonzero(a != 0)
-    print(d)
-    print("\n======== e = np.flatnonzero(a == 0) ==========")
-    e = np.flatnonzero(a == 0)
-    print(e)
-    print("\n======== f = np.array(cir[:, 1:2]) ==========")
-    f = np.array(cir[:, 1:2])
-    print(f)
-    print("\n======== g = np.array(cir[2:4, :]) ==========")
-    g = np.array(cir[2:4, :])
-    print(g)
-    print("\n======== h = np.empty([0], dtype=int) ==========")
-    h = np.empty([0], dtype=int)
-    print(h)
-    print("\n======== i = np.append(h, 1) ==========")
-    i = np.append(h, 1)
-    print(i)
-    print("\n======== i[0] = 2 ==========")
-    i[0] = 2
-    print(i)
-    print("\n======== j = np.empty([0], dtype=str ==========")
-    j = np.empty([0], dtype=str)
-    print(j)
-    print("\n======== k = np.append(j, \"123456\") ==========")
-    k = np.append(j, "123456")
-    print(k)
-    print("\n======== k[0] = \"987654321\" ==========")
-    k[0] = "987654321"
-    print(k)
-    ''' https://www.geeksforgeeks.org/modify-numpy-array-to-store-an-arbitrary-length-string/
-    The dtype of any numpy array containing string values is the maximum
-    length of any string present in the array. Once set, it will only be able
-    to store new string having length not more than the maximum length at the
-    time of the creation. If we try to reassign some another string value
-    having length greater than the maximum length of the existing elements,
-    it simply discards all the values beyond the maximum length.'''
-
+#cir_el, cir_nd, cir_val, cir_ctrl = cir_parser(FILENAME)
     # THIS FUNCTION IS NOT COMPLETE
+#elememtu bereziak ateratzeko funtzioa
 
+def elementu_bereziak(cir_el, cir_nd):  #cuando hay 2 elementos solo identifica 1
+    elementu_berezien_zerrenda=[]
+    hiztegi_transistor={}
+    hiztegi_diodo={}
+    hiztegi_opamp={}
+    nodos_transistor=[]
+    nodos_diodo=[]
+    nodos_opamp=[]
+    for elem, lista in zip(cir_el, cir_nd):
+        for letra in elem:
+            if letra.startswith("Q"):
+                nodos_transistor=lista
+                hiztegi_transistor["N_kolektor"]=nodos_transistor[0]
+                hiztegi_transistor["N_oinarri"]=nodos_transistor[1]
+                hiztegi_transistor["N_igorle"]=nodos_transistor[2]
+                #return(elem, hiztegi_transistor)
+                elementu_berezien_zerrenda.append(hiztegi_transistor)
+
+            elif letra.startswith("D"):
+                nodos_diodo=lista
+                hiztegi_diodo["N_terminal+"]=nodos_diodo[0]
+                hiztegi_diodo["N_terminal-"]=nodos_diodo[1]
+                #return(elem, hiztegi_diodo)
+                elementu_berezien_zerrenda.append(hiztegi_diodo)
+            elif letra.startswith("A"):
+                hiztegi_opamp={}
+                nodos_opamp=lista
+                hiztegi_opamp["N+"]=nodos_opamp[0]
+                hiztegi_opamp["N-"]=nodos_opamp[1]
+                hiztegi_opamp["N_out"]=nodos_opamp[2]
+                hiztegi_opamp["N_ref(0)"]=nodos_opamp[3]
+                #return(elem, hiztegi_opamp)
+                elementu_berezien_zerrenda.append(hiztegi_opamp)
+    return elementu_berezien_zerrenda
+        
 #HACER UNA FUNCION APARTE PARA SACAR B,N,NODES,EL_NUM
- 
+def get_circuit_info(cir_el, cir_nd):
+    b = len(cir_el)
+    n = len(set(cir_nd.flatten()))
+    nodes = sorted(list(set(cir_nd.flatten())))
+    el_num = len(cir_el)
+    return b, n, nodes, el_num
+
+
+#b, n, nodes, el_num = get_circuit_info(cir_el, cir_nd)
+
 def print_cir_info(cir_el, cir_nd, b, n, nodes, el_num): #mnuetsra funcion solo tiene cir_el,cir_nd entonces hay qeu adaptarla
     """ Prints the info of the circuit:
         |     1.- Elements info
@@ -160,44 +151,94 @@ def print_cir_info(cir_el, cir_nd, b, n, nodes, el_num): #mnuetsra funcion solo 
         | el_num:  the # of elements
 
     """
-    # Element info
-    print(str(el_num) + ' Elements')
-    # Node info
-    print(str(n) + ' Different nodes: ' +
-          str(nodes))
-    # Branch info
-    print("\n" + str(b) + " Branches: ")
+    berezi_elem_nodo = elementu_bereziak(cir_el, cir_nd)
+    #elementu_berezien_nodoa_lista=elementu_bereziak(cir_el, cir_nd)
+    adar_kont=0
+    circ_nd_bereziekin=[]
+    elem_berezien_kont=0 #elementu bereziaren zenbakia
+    #elementu_berezien_nodoak=elementu_bereziak(cir_el, cir_nd)[1].values() #saca el hiztegi de los nodos del elemento berezi y luego sus valores
+    #print("Branches:",elem_zenb+1) esto tienes que contarlo mas tarde
+    for branch, lista in zip(cir_el, cir_nd):
+        #for i in range(elementu_berezi_kop): 
+            if branch[0].startswith("A"):
+                adar_kont+=1
+                nplus=berezi_elem_nodo[elem_berezien_kont]["N+"]
+                nminus=berezi_elem_nodo[elem_berezien_kont]["N-"]
+                n_out=berezi_elem_nodo[elem_berezien_kont]["N_out"]
+                n_ref=berezi_elem_nodo[elem_berezien_kont]["N_ref(0)"]
+                circ_nd_bereziekin.append((int(nminus),int(n_out)))
+                print(f" {adar_kont} branch:  {branch[0]}_in    i{adar_kont}     v{adar_kont} = e{nplus} - e{nminus}")
+                adar_kont+=1
+                circ_nd_bereziekin.append((int(nminus),int(n_out)))
+                print(f" {adar_kont} branch:  {branch[0]}_out  i{adar_kont}     v{adar_kont} = e{n_out} - e{n_ref}")
+                elem_berezien_kont+=1
+            elif branch[0].startswith("Q"):
+                adar_kont+=1
+                #oinarri=elementu_berezien_nodoak[elem_berezien_kont]["N_oinarri"] # elementu_berezien_nodoak da error, tienes qie poner berezi_elem_nodo
+                oinarri=berezi_elem_nodo[elem_berezien_kont]["N_oinarri"]
+                igorle=berezi_elem_nodo[elem_berezien_kont]["N_igorle"]
+                kolektor=berezi_elem_nodo[elem_berezien_kont]["N_kolektor"]
+                circ_nd_bereziekin.append((int(oinarri),int(igorle))) #en vez de cojer con nombres haz con numeros y fuera
+                print(f" {adar_kont} branch:  {branch[0]}_be    i{adar_kont}     v{adar_kont} = e{oinarri} - e{igorle}") #base-igorle
+                adar_kont+=1
+                circ_nd_bereziekin.append((int(oinarri),int(kolektor)))
+                print(f" {adar_kont} branch:  {branch[0]}_bc    i{adar_kont}     v{adar_kont} = e{oinarri} - e{kolektor}")#base-kolektorea 
+                elem_berezien_kont+=1 
+            elif branch[0].startswith("D"): #N+ N- N_out N_ref(0)
+                    #EL CASO DE DIODO NO ESTA COMPROBADO, SEGURAMENTE HAYA ALGO MAL
+                    print("elemento especial diodo:", branch)
+                    adar_kont+=1
+                    nplus=berezi_elem_nodo[elem_berezien_kont]["N_terminal+"]
+                    nminus=berezi_elem_nodo[elem_berezien_kont]["N_terminal-"]
+                    circ_nd_bereziekin.append((int(oinarri),int(igorle)))
+                    print(f" {adar_kont} branch:  {branch[0]}_be    i{adar_kont}     v{adar_kont} = e{oinarri} - e{igorle}") #base-igorle
+                    adar_kont+=1
+                    circ_nd_bereziekin.append((int(oinarri),int(kolektor)))
+                    print(f" {adar_kont} branch:  {branch[0]}_bc    i{adar_kont}"                                           )  #SIN ACABAR
+                    elem_berezien_kont+=1      
+            else:
+                adar_kont+=1
+                circ_nd_bereziekin.append((int(lista[0]),int(lista[1]))) #meter una tupla con los 2 nodos de cada branch normal
+                columna1= lista[0]
+                columna2=lista[1]
+                columna1=columna1.astype(str) #pasalo a str para poderlo concadenar y que quede junto
+                columna2=columna2.astype(str)
+                print(f" {adar_kont} branch:  {branch[0]}      i{adar_kont}     v{adar_kont} = e{columna1} - e{columna2}")
+    #print(circ_nd_bereziekin)
+    #aldagaiak zenbakitu
+    elem_zenb= cir_el.size
+    print("      ")
+    print(elem_zenb," Elements")
+    nodo_zerrenda=[0] #ponemos del tiron el errefrentzia nodoa xq todos lo tienen no?
+    for lista in cir_nd:
+        for elem in lista:
+            if elem != 0 and elem not in nodo_zerrenda:
+                nodo_zerrenda.append(elem)
+    nodo_zerrenda_ordenatua=sorted(nodo_zerrenda)
+    nodo_zenb= len(nodo_zerrenda)
+    print(nodo_zenb," Differnt nodes:", np.array(nodo_zerrenda_ordenatua))
+    aldagaien_zerrenda=[]
+    for i in range(1, nodo_zenb):
+        aldagaien_zerrenda.append(f"e{nodo_zerrenda[i]}")  #igual ordenarlo de pequeño a grande
+    for i in range(1, adar_kont+1):
+        aldagaien_zerrenda.append(f"i{i}")
+    for i in range(1, adar_kont+1):
+        aldagaien_zerrenda.append(f"v{i}")
+    aldagai_kop=len(aldagaien_zerrenda)
+    print(aldagai_kop,"Variables:", aldagaien_zerrenda)
+    return circ_nd_bereziekin
 
-    for i in range(1, b+1):
-        indent = 12  # Number of blanks for indent
-        string = ("\t" + str(i) + ". branch:\t" +
-                  str(cir_el[i-1]) + "i".rjust(indent  - len(cir_el[i-1])) +
-                  str(i) + "v".rjust(indent  - len(str(i))) + str(i) +
-                  " = e" + str(cir_nd[i-1, 0]) +
-                  " - e" + str(cir_nd[i-1, 1]))
-        print(string)
 
-    # Variable info
-    print("\n" + str(2*b + (n-1)) + " variables: ")
-    # print all the nodes but the first(0 because is sorted)
-    for i in nodes[1:]:
-        print("e"+str(i)+", ", end="", flush=True)
-    for i in range(b):
-        print("i"+str(i+1)+", ", end="", flush=True)
-    # print all the branches but the last to close it properly
-    # It works because the minuimum amount of branches in a circuit must be 2.
-    for i in range(b-1):
-        print("v"+str(i+1)+", ", end="", flush=True)
-    print("v"+str(b))
-
-    # IT IS RECOMMENDED TO USE THIS FUNCTION WITH NO MODIFICATION.
-
-def incidence_matrix(cir_nd, nodo_zerrenda_ordenatua):
+        # IT IS RECOMMENDED TO USE THIS FUNCTION WITH NO MODIFICATION.
+         #no funciona hay que arreglarla
+"""" 
+def incidence_matrix(cir_nd, nodes):
+    
     Aa_matriz= []
     #nodo_zerrenda_ordenatua= sorted(nodo_zerrenda). ya la hemos ordenador en la anterior funcion
     for elem in cir_nd:
         lista_A=[]
-        for nodo in nodo_zerrenda_ordenatua:
+        for nodo in nodes:
             if elem[0]==nodo:
                 lista_A.append(1)
             elif elem[1]==nodo:
@@ -208,19 +249,18 @@ def incidence_matrix(cir_nd, nodo_zerrenda_ordenatua):
     Aa_matriz_array=np.array(Aa_matriz)
     Aa_matriz_array_benetakoa= Aa_matriz_array.T
     return Aa_matriz_array_benetakoa
-
-def matrizea_ondo(intzidentzia_matrizea):
-    intzidentzia_mat_irauli =intzidentzia_matrizea.T
+"""
+def matrizea_ondo(Aa_matriz_array_benetakoa):
+    intzidentzia_mat_irauli =Aa_matriz_array_benetakoa.T
     txarto=0
     for lista in intzidentzia_mat_irauli:
         batuketa=sum(lista)
         if batuketa!=0:
-            print("zerbait txarto dago:(")
-            txarto=1
+            return False
         else:
             continue
     if txarto==0:
-        print("matrizea ondo")
+        return True
 
 
 """
@@ -230,11 +270,20 @@ python-exit-commands-why-so-many-and-when-should-each-be-used
 """
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        filename = sys.argv[1]
+        FILENAME = sys.argv[1]
     else:
-        filename = "0_zlel_V_R_Q.cir"
+        FILENAME = "0_zlel_OPAMP.cir"
     # Parse the circuit
-    # [cir_el,cir_nd,cir_val,cir_ctr]=cir_parser(filename)
-    cir_parser(filename)
+    cir_el, cir_nd, cir_val, cir_ctrl = cir_parser(FILENAME)
+   
+    b, n, nodes, el_num = get_circuit_info(cir_el, cir_nd)
+    #print_cir_info(cir_el, cir_nd, b, n, nodes, el_num) si pongo esta tambien lo imprime 2 veces, no se como hacer para ponerlo mejor
+    circ_nd_bereziekin= print_cir_info(cir_el, cir_nd, b, n, nodes, el_num) #esta funcion tiene que devolver circ_nd_bereziekin para poder usarlo en la siguiente funcion
+    Aa_matriz_array_benetakoa = incidence_matrix(cir_nd, nodes)   #Aa_matriz_array_benetako es la intzidentzia matrize
+    if matrizea_ondo(Aa_matriz_array_benetakoa)==True:
+        print(Aa_matriz_array_benetakoa)
+    else:
+        print("intzidentzia matrizea ez da zuzena")
 
 #    THIS FUNCTION IS NOT COMPLETE
+

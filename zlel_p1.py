@@ -166,10 +166,10 @@ def print_cir_info(cir_el, cir_nd, b, n, nodes, el_num): #mnuetsra funcion solo 
                 nminus=berezi_elem_nodo[elem_berezien_kont]["N-"]
                 n_out=berezi_elem_nodo[elem_berezien_kont]["N_out"]
                 n_ref=berezi_elem_nodo[elem_berezien_kont]["N_ref(0)"]
-                circ_nd_bereziekin.append((int(nminus),int(n_out)))
+                circ_nd_bereziekin.append((int(nplus),int(nminus)))
                 print(f" {adar_kont} branch:  {branch[0]}_in    i{adar_kont}     v{adar_kont} = e{nplus} - e{nminus}")
                 adar_kont+=1
-                circ_nd_bereziekin.append((int(nminus),int(n_out)))
+                circ_nd_bereziekin.append((int(n_out),int(n_ref)))
                 print(f" {adar_kont} branch:  {branch[0]}_out  i{adar_kont}     v{adar_kont} = e{n_out} - e{n_ref}")
                 elem_berezien_kont+=1
             elif branch[0].startswith("Q"):
@@ -231,27 +231,22 @@ def print_cir_info(cir_el, cir_nd, b, n, nodes, el_num): #mnuetsra funcion solo 
 
         # IT IS RECOMMENDED TO USE THIS FUNCTION WITH NO MODIFICATION.
          #no funciona hay que arreglarla
-"""" 
-def incidence_matrix(cir_nd, nodes):
-    
-    Aa_matriz= []
-    #nodo_zerrenda_ordenatua= sorted(nodo_zerrenda). ya la hemos ordenador en la anterior funcion
-    for elem in cir_nd:
-        lista_A=[]
-        for nodo in nodes:
-            if elem[0]==nodo:
-                lista_A.append(1)
-            elif elem[1]==nodo:
-                lista_A.append(-1)
+def incidence_matrix(branches, nodes):
+    A = []
+    for nodo in nodes:
+        fila = []
+        for rama in branches:
+            #print(rama)
+            if nodo == rama[0]:
+                fila.append(1)
+            elif nodo == rama[1]:
+                fila.append(-1)
             else:
-                lista_A.append(0)
-        Aa_matriz.append(lista_A)
-    Aa_matriz_array=np.array(Aa_matriz)
-    Aa_matriz_array_benetakoa= Aa_matriz_array.T
-    return Aa_matriz_array_benetakoa
-"""
-def matrizea_ondo(Aa_matriz_array_benetakoa):
-    intzidentzia_mat_irauli =Aa_matriz_array_benetakoa.T
+                fila.append(0)
+        A.append(fila)
+    return np.array(A)
+def matrizea_ondo(A_matriz_array_benetakoa):
+    intzidentzia_mat_irauli =A_matriz_array_benetakoa.T
     txarto=0
     for lista in intzidentzia_mat_irauli:
         batuketa=sum(lista)
@@ -262,7 +257,10 @@ def matrizea_ondo(Aa_matriz_array_benetakoa):
     if txarto==0:
         return True
 
-
+def Aa_matrizea(Amatrizea):
+    #lehenengo lerroa 0 nodoarekin erlazionatuta dago, beraz hori kenduko dugu Aa matrize linealki ind lortzeko
+    Aa = np.delete(Amatrizea, 0, axis=0)
+    return Aa
 """
 https://stackoverflow.com/questions/419163/what-does-if-name-main-do
 https://stackoverflow.com/questions/19747371/
@@ -272,18 +270,19 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         FILENAME = sys.argv[1]
     else:
-        FILENAME = "0_zlel_OPAMP.cir"
+        FILENAME = "0_zlel_V_R_Q.cir"
     # Parse the circuit
     cir_el, cir_nd, cir_val, cir_ctrl = cir_parser(FILENAME)
    
     b, n, nodes, el_num = get_circuit_info(cir_el, cir_nd)
     #print_cir_info(cir_el, cir_nd, b, n, nodes, el_num) si pongo esta tambien lo imprime 2 veces, no se como hacer para ponerlo mejor
     circ_nd_bereziekin= print_cir_info(cir_el, cir_nd, b, n, nodes, el_num) #esta funcion tiene que devolver circ_nd_bereziekin para poder usarlo en la siguiente funcion
-    Aa_matriz_array_benetakoa = incidence_matrix(cir_nd, nodes)   #Aa_matriz_array_benetako es la intzidentzia matrize
-    if matrizea_ondo(Aa_matriz_array_benetakoa)==True:
-        print(Aa_matriz_array_benetakoa)
+    A_matriz_array_benetakoa = incidence_matrix(circ_nd_bereziekin,nodes)   #Aa_matriz_array_benetako es la intzidentzia matrize.
+    #la movida es meter circ_nd_bereziekin que ya esta bien puesto pa que detecte todos los casos y bien detectados
+    if matrizea_ondo(A_matriz_array_benetakoa)==True:
+        print(Aa_matrizea(A_matriz_array_benetakoa))
     else:
         print("intzidentzia matrizea ez da zuzena")
+    
 
 #    THIS FUNCTION IS NOT COMPLETE
-

@@ -190,11 +190,8 @@ def print_cir_info(cir_el, cir_nd, b, n, nodes, el_num): #mnuetsra funcion solo 
                     adar_kont+=1
                     nplus=berezi_elem_nodo[elem_berezien_kont]["N_terminal+"]
                     nminus=berezi_elem_nodo[elem_berezien_kont]["N_terminal-"]
-                    circ_nd_bereziekin.append((int(oinarri),int(igorle)))
-                    print(f" {adar_kont} branch:  {branch[0]}_be    i{adar_kont}     v{adar_kont} = e{oinarri} - e{igorle}") #base-igorle
-                    adar_kont+=1
-                    circ_nd_bereziekin.append((int(oinarri),int(kolektor)))
-                    print(f" {adar_kont} branch:  {branch[0]}_bc    i{adar_kont}"                                           )  #SIN ACABAR
+                    circ_nd_bereziekin.append((nminus,nplus))
+                    print(f" {adar_kont} branch:  {branch[0]}    i{adar_kont}     v{adar_kont} = e{nminus} - e{nplus}") 
                     elem_berezien_kont+=1      
             else:
                 adar_kont+=1
@@ -232,7 +229,7 @@ def print_cir_info(cir_el, cir_nd, b, n, nodes, el_num): #mnuetsra funcion solo 
         # IT IS RECOMMENDED TO USE THIS FUNCTION WITH NO MODIFICATION.
          #no funciona hay que arreglarla
 def incidence_matrix(branches, nodes):
-    A = []
+    Aa = []
     for nodo in nodes:
         fila = []
         for rama in branches:
@@ -244,9 +241,9 @@ def incidence_matrix(branches, nodes):
             else:
                 fila.append(0)
         A.append(fila)
-    return np.array(A)
-def matrizea_ondo(A_matriz_array_benetakoa):
-    intzidentzia_mat_irauli =A_matriz_array_benetakoa.T
+    return np.array(Aa)
+def matrizea_ondo(Aa_matriz_array_benetakoa):
+    intzidentzia_mat_irauli =Aa_matriz_array_benetakoa.T
     txarto=0
     for lista in intzidentzia_mat_irauli:
         batuketa=sum(lista)
@@ -257,32 +254,31 @@ def matrizea_ondo(A_matriz_array_benetakoa):
     if txarto==0:
         return True
 
-def Aa_matrizea(Amatrizea):
+def A_matrizea(Aamatrizea):
     #lehenengo lerroa 0 nodoarekin erlazionatuta dago, beraz hori kenduko dugu Aa matrize linealki ind lortzeko
-    Aa = np.delete(Amatrizea, 0, axis=0)
-    return Aa
-"""
-https://stackoverflow.com/questions/419163/what-does-if-name-main-do
-https://stackoverflow.com/questions/19747371/
-python-exit-commands-why-so-many-and-when-should-each-be-used
-"""
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        FILENAME = sys.argv[1]
-    else:
-        FILENAME = "0_zlel_V_R_Q.cir"
-    # Parse the circuit
+    A = np.delete(Aamatrizea, 0, axis=0)
+    return A
+
+def run_p1(FILENAME):
     cir_el, cir_nd, cir_val, cir_ctrl = cir_parser(FILENAME)
    
     b, n, nodes, el_num = get_circuit_info(cir_el, cir_nd)
     #print_cir_info(cir_el, cir_nd, b, n, nodes, el_num) si pongo esta tambien lo imprime 2 veces, no se como hacer para ponerlo mejor
     circ_nd_bereziekin= print_cir_info(cir_el, cir_nd, b, n, nodes, el_num) #esta funcion tiene que devolver circ_nd_bereziekin para poder usarlo en la siguiente funcion
-    A_matriz_array_benetakoa = incidence_matrix(circ_nd_bereziekin,nodes)   #Aa_matriz_array_benetako es la intzidentzia matrize.
+    Aa_matriz_array_benetakoa = incidence_matrix(circ_nd_bereziekin,nodes)   #Aa_matriz_array_benetako es la intzidentzia matrize.
     #la movida es meter circ_nd_bereziekin que ya esta bien puesto pa que detecte todos los casos y bien detectados
-    if matrizea_ondo(A_matriz_array_benetakoa)==True:
-        print(Aa_matrizea(A_matriz_array_benetakoa))
+    if matrizea_ondo(Aa_matriz_array_benetakoa)==True:
+        print(A_matrizea(Aa_matriz_array_benetakoa))
     else:
         print("intzidentzia matrizea ez da zuzena")
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        FILENAME = sys.argv[1]
+    else:
+        FILENAME = "0_zlel_V_R_Q.cir"
+    run_p1(FILENAME)
+
     
 
 #    THIS FUNCTION IS NOT COMPLETE

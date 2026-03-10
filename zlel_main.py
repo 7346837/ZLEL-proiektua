@@ -4,27 +4,31 @@
 import sys
 import os
 
-# Añadir la carpeta 'zlel' al path para importar zlel_p1
+# añadir carpeta zlel al path
 sys.path.append(os.path.join(os.path.dirname(__file__), "zlel"))
 
-from zlel_p1 import cir_parser, get_circuit_info, print_cir_info, incidence_matrix, matrizea_ondo
+import zlel_p2 as zl2
+
 
 if __name__ == "__main__":
-    # Si pasas un archivo por argumento
-    if len(sys.argv) > 1:
-        FILENAME = sys.argv[1]
-    else:
-        # Archivo por defecto en la carpeta cirs
-        FILENAME = os.path.join(os.path.dirname(__file__), "cirs", "all", "0_zlel_serial_I_IV.cir")
 
-    cir_el, cir_nd, cir_val, cir_ctrl = cir_parser(FILENAME)
-    b, n, nodes, el_num = get_circuit_info(cir_el, cir_nd)
-    circ_nd_bereziekin = print_cir_info(cir_el, cir_nd, b, n, nodes, el_num)
+    base_dir = os.path.dirname(__file__)
+    cir_folder = os.path.join(base_dir, "cirs", "all")
 
-    Aa_matriz_array_benetakoa = incidence_matrix(circ_nd_bereziekin, nodes)
+    cir_files = sorted(f for f in os.listdir(cir_folder) if f.endswith(".cir"))
 
-    if matrizea_ondo(Aa_matriz_array_benetakoa):
-        print("Incidence Matrix :")
-        print(Aa_matriz_array_benetakoa)
-    else:
-        print("intzidentzia matrizea ez da zuzena")
+    print("\n=== Ejecutando todos los circuitos ===\n")
+
+    for file in cir_files:
+
+        path = os.path.join(cir_folder, file)
+
+        print("----------------------------------")
+        print("Circuito:", file)
+
+        try:
+            zl2.run_file(path)
+        except SystemExit as e:
+            print("ERROR:", e)
+
+    print("\n=== Fin de simulaciones ===")

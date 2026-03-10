@@ -240,7 +240,7 @@ def incidence_matrix(branches, nodes):
                 fila.append(-1)
             else:
                 fila.append(0)
-        A.append(fila)
+        Aa.append(fila)
     return np.array(Aa)
 def matrizea_ondo(Aa_matriz_array_benetakoa):
     intzidentzia_mat_irauli =Aa_matriz_array_benetakoa.T

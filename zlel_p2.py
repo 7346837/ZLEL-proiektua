@@ -165,7 +165,7 @@ def check_integrity(cir_elx, cir_ndx, cir_valx, nodes):
     check_series_current_sources(cir_elx, cir_ndx, cir_valx, Aa, nodes)
 
 
-def build_M_N_Us(cir_elx, cir_valx, cir_ctrlx, tr_mode=False, t=0.0):
+def build_M_N_Us(cir_elx, cir_valx, cir_ctrlx, tr_mode=False, t=0.0): ##Galdetu iñigori matrize diagonalarena
     b = len(cir_elx)
 
     M = np.zeros((b, b), dtype=float)

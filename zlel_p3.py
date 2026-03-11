@@ -24,67 +24,6 @@ else:
     import zlel_p2 as zl2
 
 
-def cir_parser_p3(filename):
-    osagaiak = []
-
-    with open(filename, 'r') as fitx:
-        for lerroa in fitx:
-            lerroa = lerroa.strip()
-
-            if not lerroa:
-                continue
-            if lerroa.startswith('.'):
-                continue
-
-            zatiak = lerroa.split()
-
-            if len(zatiak) < 9:
-                continue
-
-            try:
-                izena = zatiak[0]
-                n1 = int(zatiak[1])
-                n2 = int(zatiak[2])
-                n3 = int(zatiak[3])
-                n4 = int(zatiak[4])
-                bal1 = float(zatiak[5])
-                bal2 = float(zatiak[6])
-                bal3 = float(zatiak[7])
-                kontrol = zatiak[8]
-            except Exception:
-                continue
-
-            osagaiak.append((izena, n1, n2, n3, n4, bal1, bal2, bal3, kontrol))
-
-    if len(osagaiak) == 0:
-        sys.exit("File corrupted: .cir size is incorrect.")
-
-    cir_el = np.array([elem[0] for elem in osagaiak], dtype=str).reshape(-1, 1)
-    cir_nd = np.array([elem[1:5] for elem in osagaiak], dtype=int)
-    cir_val = np.array([elem[5:8] for elem in osagaiak], dtype=float)
-    cir_ctrl = np.array([elem[8] for elem in osagaiak], dtype=str).reshape(-1, 1)
-
-    return cir_el, cir_nd, cir_val, cir_ctrl
-
-
-def parse_analyses(filename):
-    analisi_zerrenda = []
-
-    with open(filename, 'r') as fitx:
-        for lerroa in fitx:
-            lerroa = lerroa.strip()
-
-            if not lerroa:
-                continue
-
-            zatiak = lerroa.split()
-
-            if zatiak and zatiak[0].startswith('.'):
-                analisi_zerrenda.append(zatiak)
-
-    return analisi_zerrenda
-
-
 def expand_for_p3(cir_el, cir_nd, cir_val, cir_ctrl):
     cir_el_zabalduta = []
     cir_nd_zabalduta = []
@@ -101,7 +40,7 @@ def expand_for_p3(cir_el, cir_nd, cir_val, cir_ctrl):
             cir_val_zabalduta.append([float(cir_val[i][0]), float(cir_val[i][1]), float(cir_val[i][2])])
             cir_ctrl_zabalduta.append(str(cir_ctrl[i][0]))
 
-            cir_el_zabalduta.append(elem_izena + '_out')
+            cir_el_zabalduta.append(elem_izena + '_ou')
             cir_nd_zabalduta.append([int(cir_nd[i][2]), int(cir_nd[i][3])])
             cir_val_zabalduta.append([float(cir_val[i][0]), float(cir_val[i][1]), float(cir_val[i][2])])
             cir_ctrl_zabalduta.append(str(cir_ctrl[i][0]))
@@ -156,7 +95,7 @@ def print_cir_info_p3(cir_el, cir_nd):
             adar_kont += 1
             circ_nd_bereziekin.append((int(nodoak[2]), int(nodoak[3])))
             adar_inprimatzeko.append(
-                f"\t{adar_kont}. branch:\t{elem_izena}_out\t\ti{adar_kont}\t\tv{adar_kont} = e{nodoak[2]} - e{nodoak[3]}"
+                f"\t{adar_kont}. branch:\t{elem_izena}_ou\t\ti{adar_kont}\t\tv{adar_kont} = e{nodoak[2]} - e{nodoak[3]}"
             )
 
         elif elem_mota == 'Q':
@@ -204,114 +143,6 @@ def print_cir_info_p3(cir_el, cir_nd):
     print("")
 
     return circ_nd_bereziekin, nodo_zerrenda
-
-
-def incidence_matrix(branches, nodes):
-    Aa = []
-    for nodo in nodes:
-        fila = []
-        for rama in branches:
-            if nodo == rama[0]:
-                fila.append(1)
-            elif nodo == rama[1]:
-                fila.append(-1)
-            else:
-                fila.append(0)
-        Aa.append(fila)
-    return np.array(Aa)
-
-
-def reduced_incidence(cir_ndx, nodes):
-    Aa = incidence_matrix(cir_ndx.tolist(), list(nodes))
-    erreferentzia_ind = list(nodes).index(0)
-    A = np.delete(Aa, erreferentzia_ind, axis=0)
-    return Aa, A
-
-
-def check_reference_node(nodes):
-    if 0 not in nodes:
-        sys.exit('Reference node "0" is not defined in the circuit.')
-
-
-def check_floating_nodes(Aa, nodes):
-    for i, nodoa in enumerate(nodes):
-        if np.count_nonzero(Aa[i, :]) == 1:
-            sys.exit(f'Node {nodoa} is floating.')
-
-
-def source_fixed_value(branch_name, branch_values, tr_mode=False, t=0.0):
-    elem_mota = branch_name[0].upper()
-
-    if elem_mota in ('V', 'I', 'R', 'E', 'G', 'H', 'F'):
-        return float(branch_values[0])
-
-    if elem_mota in ('B', 'Y'):
-        anplitudea = float(branch_values[0])
-        maiztasuna = float(branch_values[1])
-        fasea = float(branch_values[2])
-
-        if tr_mode:
-            return anplitudea * math.sin(2 * math.pi * maiztasuna * t + math.pi / 180.0 * fasea)
-
-        return anplitudea
-
-    return float(branch_values[0])
-
-
-def check_parallel_voltage_sources(cir_elx, cir_ndx, cir_valx):
-    tentsio_iturri_indizeak = []
-
-    for i in range(len(cir_elx)):
-        elem_mota = cir_elx[i][0][0].upper()
-        if elem_mota in ('V', 'B'):
-            tentsio_iturri_indizeak.append(i)
-
-    for a in range(len(tentsio_iturri_indizeak)):
-        i = tentsio_iturri_indizeak[a]
-        n1_i, n2_i = int(cir_ndx[i][0]), int(cir_ndx[i][1])
-        balio_i = source_fixed_value(cir_elx[i][0], cir_valx[i], tr_mode=False)
-
-        for b in range(a + 1, len(tentsio_iturri_indizeak)):
-            j = tentsio_iturri_indizeak[b]
-            n1_j, n2_j = int(cir_ndx[j][0]), int(cir_ndx[j][1])
-            balio_j = source_fixed_value(cir_elx[j][0], cir_valx[j], tr_mode=False)
-
-            if n1_i == n1_j and n2_i == n2_j:
-                if abs(balio_i - balio_j) > 1e-12:
-                    sys.exit(f'Parallel V sources at branches {i} and {j}.')
-            elif n1_i == n2_j and n2_i == n1_j:
-                if abs(balio_i + balio_j) > 1e-12:
-                    sys.exit(f'Parallel V sources at branches {i} and {j}.')
-
-
-def check_series_current_sources(cir_elx, cir_ndx, cir_valx, Aa, nodes):
-    for lerro_ind in range(len(nodes)):
-        konektatutako_adarrak = np.flatnonzero(Aa[lerro_ind, :] != 0)
-
-        if len(konektatutako_adarrak) < 2:
-            continue
-
-        denak_korronte_iturriak = True
-        kcl_batura = 0.0
-        zero_ez_direnak = 0
-
-        for adar_ind in konektatutako_adarrak:
-            elem_mota = cir_elx[adar_ind][0][0].upper()
-
-            if elem_mota not in ('I', 'Y'):
-                denak_korronte_iturriak = False
-                break
-
-            sinatutako_balioa = Aa[lerro_ind, adar_ind] * source_fixed_value(
-                cir_elx[adar_ind][0], cir_valx[adar_ind], tr_mode=False
-            )
-            kcl_batura += sinatutako_balioa
-
-            if abs(sinatutako_balioa) > 1e-12:
-                zero_ez_direnak += 1
-
-        if denak_korronte_iturriak and zero_ez_direnak == len(konektatutako_adarrak) and abs(kcl_batura) > 1e-12:
-            sys.exit(f'I sources in series at node {nodes[lerro_ind]}.')
 
 
 def diode_NR(I0, nD, Vdj):
@@ -435,11 +266,11 @@ def build_M_N_Us_NR(cir_elx, cir_valx, cir_ctrlx, v_guess, tr_mode=False, t=0.0)
 
         elif elem_mota == 'B':
             M[i, i] = 1.0
-            Us[i, 0] = source_fixed_value(elem_izena, cir_valx[i], tr_mode=tr_mode, t=t)
+            Us[i, 0] = zl2.source_fixed_value(elem_izena, cir_valx[i], tr_mode=tr_mode, t=t)
 
         elif elem_mota == 'Y':
             N[i, i] = 1.0
-            Us[i, 0] = source_fixed_value(elem_izena, cir_valx[i], tr_mode=tr_mode, t=t)
+            Us[i, 0] = zl2.source_fixed_value(elem_izena, cir_valx[i], tr_mode=tr_mode, t=t)
 
         elif elem_mota == 'E':
             M[i, i] = 1.0
@@ -480,7 +311,7 @@ def build_M_N_Us_NR(cir_elx, cir_valx, cir_ctrlx, v_guess, tr_mode=False, t=0.0)
         elif elem_mota == 'A':
             if elem_izena_maius.endswith('_IN'):
                 M[i, i] = 1.0
-            elif elem_izena_maius.endswith('_OUT'):
+            elif elem_izena_maius.endswith('_OU'):
                 if i - 1 < 0:
                     sys.exit(f'Unexpected opamp branch name {elem_izena}.')
                 N[i, i - 1] = 1.0
@@ -535,76 +366,11 @@ def build_M_N_Us_NR(cir_elx, cir_valx, cir_ctrlx, v_guess, tr_mode=False, t=0.0)
     return M, N, Us
 
 
-def build_tableau(A, M, N):
-    n_minus_1 = A.shape[0]
-    b = A.shape[1]
-    I = np.eye(b, dtype=float)
-
-    T = np.zeros((n_minus_1 + 2 * b, n_minus_1 + 2 * b), dtype=float)
-    T[0:n_minus_1, n_minus_1 + b:] = A
-    T[n_minus_1:n_minus_1 + b, 0:n_minus_1] = -A.T
-    T[n_minus_1:n_minus_1 + b, n_minus_1:n_minus_1 + b] = I
-    T[n_minus_1 + b:, n_minus_1:n_minus_1 + b] = M
-    T[n_minus_1 + b:, n_minus_1 + b:] = N
-
-    return T
-
-
-def build_U(Us, n, b):
-    U = np.zeros((n - 1 + 2 * b, 1), dtype=float)
-    U[n - 1 + b:, 0] = Us[:, 0]
-    return U
-
-
-def print_solution(sol, b, n):
-    if sol.dtype == np.float64:
-        tmp = np.zeros((np.size(sol), 1), dtype=float)
-        for i in range(np.size(sol)):
-            tmp[i] = np.array(sol[i])
-        sol = tmp
-
-    tolerantzia = 1e-9
-
-    print("\n========== Nodes voltage to reference ========")
-    for i in range(1, n):
-        balioa = sol[i - 1][0]
-        if abs(balioa) < tolerantzia:
-            balioa = 0.0
-        print("e" + str(i) + " = ", "[{:10.9f}]".format(balioa))
-
-    print("\n========== Branches voltage difference ========")
-    for i in range(1, b + 1):
-        balioa = sol[i + n - 2][0]
-        if abs(balioa) < tolerantzia:
-            balioa = 0.0
-        print("v" + str(i) + " = ", "[{:10.9f}]".format(balioa))
-
-    print("\n=============== Branches currents ==============")
-    for i in range(1, b + 1):
-        balioa = sol[i + b + n - 2][0]
-        if abs(balioa) < tolerantzia:
-            balioa = 0.0
-        print("i" + str(i) + " = ", "[{:10.9f}]".format(balioa))
-
-    print("\n================= End solution =================\n")
-
-
 def solve_linear_or_NR(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, tr_mode=False, t=0.0, hasierako_sol=None, eps=1e-5, nmax=100):
     if not has_nonlinear(cir_elx):
-        _, A = reduced_incidence(cir_ndx, nodes)
-        b = len(cir_elx)
-        n = len(nodes)
+        return zl2.solve_tableau(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, tr_mode=tr_mode, t=t)
 
-        M, N, Us = build_M_N_Us_NR(cir_elx, cir_valx, cir_ctrlx, np.zeros(b), tr_mode=tr_mode, t=t)
-        T = build_tableau(A, M, N)
-        U = build_U(Us, n, b)
-
-        try:
-            return np.linalg.solve(T, U)
-        except np.linalg.LinAlgError:
-            sys.exit('Error solving Tableau equations, check if det(T) != 0.')
-
-    _, A = reduced_incidence(cir_ndx, nodes)
+    _, A = zl2.reduced_incidence(cir_ndx, nodes)
     b = len(cir_elx)
     n = len(nodes)
 
@@ -620,8 +386,8 @@ def solve_linear_or_NR(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, tr_mode=Fal
 
     for _ in range(nmax):
         M, N, Us = build_M_N_Us_NR(cir_elx, cir_valx, cir_ctrlx, v_guess, tr_mode=tr_mode, t=t)
-        T = build_tableau(A, M, N)
-        U = build_U(Us, n, b)
+        T = zl2.build_tableau(A, M, N)
+        U = zl2.build_U(Us, n, b)
 
         try:
             sol = np.linalg.solve(T, U)
@@ -643,48 +409,6 @@ def solve_linear_or_NR(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, tr_mode=Fal
     sys.exit('Error: Newton-Raphson did not converge.')
 
 
-def build_csv_header(first_label, b, n):
-    goiburua = first_label
-    for i in range(1, n):
-        goiburua += ',e' + str(i)
-    for i in range(1, b + 1):
-        goiburua += ',v' + str(i)
-    for i in range(1, b + 1):
-        goiburua += ',i' + str(i)
-    return goiburua
-
-
-def get_project_root():
-    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
-def save_sim_output(filename, extension):
-    proiektu_erroa = get_project_root()
-    sims_karpeta = os.path.join(proiektu_erroa, 'sims')
-    os.makedirs(sims_karpeta, exist_ok=True)
-
-    oin_izena = os.path.splitext(os.path.basename(filename))[0]
-    return os.path.join(sims_karpeta, oin_izena + extension)
-
-
-def solution_row(sol):
-    return ','.join('{:.9f}'.format(float(x[0])) for x in sol)
-
-
-def save_output_text(filename, text):
-    proiektu_erroa = get_project_root()
-    outputs_karpeta = os.path.join(proiektu_erroa, 'outputs')
-    os.makedirs(outputs_karpeta, exist_ok=True)
-
-    oin_izena = os.path.splitext(os.path.basename(filename))[0]
-    irteera_izena = os.path.join(outputs_karpeta, oin_izena + '.out')
-
-    with open(irteera_izena, 'w', encoding='utf-8') as fitx:
-        fitx.write(text)
-
-    return irteera_izena
-
-
 def run_dc(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, step, source_name):
     iturri_indizea = None
 
@@ -698,7 +422,7 @@ def run_dc(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, s
 
     elem_mota = cir_elx[iturri_indizea][0][0].upper()
     lehen_label = 'V' if elem_mota in ('V', 'B', 'E', 'H') else 'I'
-    irteera_izena = save_sim_output(filename, '_' + source_name + '.dc')
+    irteera_izena = zl2.save_sim_output(filename, '_' + source_name + '.dc')
 
     b = len(cir_elx)
     n = len(nodes)
@@ -713,7 +437,7 @@ def run_dc(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, s
     aurreko_sol = None
 
     with open(irteera_izena, 'w') as fitx:
-        print(build_csv_header(lehen_label, b, n), file=fitx)
+        print(zl2.build_csv_header(lehen_label, b, n), file=fitx)
 
         if pausoa > 0:
             baldintza = lambda x: x <= amaiera + 1e-12
@@ -725,7 +449,7 @@ def run_dc(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, s
         while baldintza(uneko_balioa):
             balioak[iturri_indizea][0] = uneko_balioa
             sol = solve_linear_or_NR(cir_elx, cir_ndx, balioak, cir_ctrlx, nodes, tr_mode=False, t=0.0, hasierako_sol=aurreko_sol)
-            print('{:.9f},{}'.format(uneko_balioa, solution_row(sol)), file=fitx)
+            print('{:.9f},{}'.format(uneko_balioa, zl2.solution_row(sol)), file=fitx)
             aurreko_sol = sol
             uneko_balioa = round(uneko_balioa + pausoa, 10)
 
@@ -733,7 +457,7 @@ def run_dc(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, s
 
 
 def run_tr(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, step):
-    irteera_izena = save_sim_output(filename, '.tr')
+    irteera_izena = zl2.save_sim_output(filename, '.tr')
 
     b = len(cir_elx)
     n = len(nodes)
@@ -748,7 +472,7 @@ def run_tr(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, s
     aurreko_sol = None
 
     with open(irteera_izena, 'w') as fitx:
-        print(build_csv_header('t', b, n), file=fitx)
+        print(zl2.build_csv_header('t', b, n), file=fitx)
 
         if pausoa > 0:
             baldintza = lambda x: x <= amaiera + 1e-12
@@ -757,7 +481,7 @@ def run_tr(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, s
 
         while baldintza(denbora):
             sol = solve_linear_or_NR(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, tr_mode=True, t=denbora, hasierako_sol=aurreko_sol)
-            print('{:.9f},{}'.format(denbora, solution_row(sol)), file=fitx)
+            print('{:.9f},{}'.format(denbora, zl2.solution_row(sol)), file=fitx)
             aurreko_sol = sol
             denbora = round(denbora + pausoa, 10)
 
@@ -769,20 +493,15 @@ def run_file(filename):
 
     try:
         with contextlib.redirect_stdout(irteera_bufferra):
-            cir_el, cir_nd, cir_val, cir_ctrl = cir_parser_p3(filename)
+            cir_el, cir_nd, cir_val, cir_ctrl = zl1.cir_parser(filename)
             cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodoak = expand_for_p3(cir_el, cir_nd, cir_val, cir_ctrl)
 
-            check_reference_node(nodoak)
-            Aa_top, _ = reduced_incidence(cir_ndx, nodoak)
-            check_floating_nodes(Aa_top, nodoak)
-            check_parallel_voltage_sources(cir_elx, cir_ndx, cir_valx)
-            check_series_current_sources(cir_elx, cir_ndx, cir_valx, Aa_top, nodoak)
-
-            analisiak = parse_analyses(filename)
+            zl2.check_integrity(cir_elx, cir_ndx, cir_valx, nodoak)
+            analisiak = zl2.parse_analyses(filename)
 
             if not analisiak:
                 circ_nd_bereziekin, nodo_zerrenda = print_cir_info_p3(cir_el, cir_nd)
-                Aa = incidence_matrix(circ_nd_bereziekin, nodo_zerrenda)
+                Aa = zl1.incidence_matrix(circ_nd_bereziekin, nodo_zerrenda)
                 print("Incidence Matrix: ")
                 print(Aa)
 
@@ -792,13 +511,13 @@ def run_file(filename):
 
                     if komandoa == '.PR':
                         circ_nd_bereziekin, nodo_zerrenda = print_cir_info_p3(cir_el, cir_nd)
-                        Aa = incidence_matrix(circ_nd_bereziekin, nodo_zerrenda)
+                        Aa = zl1.incidence_matrix(circ_nd_bereziekin, nodo_zerrenda)
                         print("Incidence Matrix: ")
                         print(Aa)
 
                     elif komandoa == '.OP':
                         sol = solve_linear_or_NR(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodoak, tr_mode=False, t=0.0)
-                        print_solution(sol, len(cir_elx), len(nodoak))
+                        zl2.print_solution(sol, len(cir_elx), len(nodoak))
 
                     elif komandoa == '.DC':
                         run_dc(
@@ -818,13 +537,13 @@ def run_file(filename):
     except SystemExit as errorea:
         print(str(errorea), file=irteera_bufferra)
         testua = irteera_bufferra.getvalue()
-        output_file = save_output_text(filename, testua)
+        output_file = zl2.save_output_text(filename, testua)
         print(testua, end='')
         print("Archivo OUTPUT guardado en:", output_file)
         return
 
     testua = irteera_bufferra.getvalue()
-    output_file = save_output_text(filename, testua)
+    output_file = zl2.save_output_text(filename, testua)
     print(testua, end='')
     print("Archivo OUTPUT guardado en:", output_file)
 

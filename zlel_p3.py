@@ -1,13 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-
-.. module:: zlel_p3.py
-    :synopsis: 3. praktikako zirkuitu ez-linealak
-
-.. moduleauthor:: YOUR NAME AND E-MAIL
-
-"""
 
 import os
 import sys

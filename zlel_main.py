@@ -6,7 +6,7 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "zlel"))
 
-import zlel_p3 as zl3
+import zlel_p4 as zl4
 
 
 def run_all_circuits():
@@ -19,7 +19,7 @@ def run_all_circuits():
     )
 
     print("\n====================================")
-    print(" Running ALL circuits (P1 + P2 + P3)")
+    print(" Running ALL circuits (P1 + P2 + P3 + P4)")
     print("====================================\n")
 
     for cir in cir_files:
@@ -31,7 +31,7 @@ def run_all_circuits():
         print("------------------------------------")
 
         try:
-            zl3.run_file(filepath)
+            zl4.run_file(filepath)
 
         except Exception as e:
             print("ERROR:", e)
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
 
         filename = sys.argv[1]
-        zl3.run_file(filename)
+        zl4.run_file(filename)
 
     else:
 

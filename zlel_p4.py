@@ -1,3 +1,13 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+
+.. module:: zlel_p4.py
+    :synopsis: 4. praktikako zirkuitu dinamikoak
+
+.. moduleauthor:: YOUR NAME AND E-MAIL
+
+"""
 
 import os
 import sys
@@ -23,9 +33,8 @@ def has_dynamic(cir_elx):
 
 
 def print_cir_info_p4(cir_el, cir_nd):
-    adar_kont = 0
     circ_nd_bereziekin = []
-    adar_inprimatzeko = []
+    adar_izenak = []
 
     for i in range(len(cir_el)):
         elem_izena = cir_el[i][0]
@@ -33,61 +42,52 @@ def print_cir_info_p4(cir_el, cir_nd):
         nodoak = cir_nd[i]
 
         if elem_mota == 'A':
-            adar_kont += 1
             circ_nd_bereziekin.append((int(nodoak[0]), int(nodoak[1])))
-            adar_inprimatzeko.append(
-                f"\t{adar_kont}. branch:\t{elem_izena}_in\t\ti{adar_kont}\t\tv{adar_kont} = e{nodoak[0]} - e{nodoak[1]}"
-            )
+            adar_izenak.append(elem_izena + '_in')
 
-            adar_kont += 1
             circ_nd_bereziekin.append((int(nodoak[2]), int(nodoak[3])))
-            adar_inprimatzeko.append(
-                f"\t{adar_kont}. branch:\t{elem_izena}_ou\t\ti{adar_kont}\t\tv{adar_kont} = e{nodoak[2]} - e{nodoak[3]}"
-            )
+            adar_izenak.append(elem_izena + '_ou')
 
         elif elem_mota == 'Q':
-            adar_kont += 1
             circ_nd_bereziekin.append((int(nodoak[1]), int(nodoak[2])))
-            adar_inprimatzeko.append(
-                f"\t{adar_kont}. branch:\t{elem_izena}_be\t\ti{adar_kont}\t\tv{adar_kont} = e{nodoak[1]} - e{nodoak[2]}"
-            )
+            adar_izenak.append(elem_izena + '_be')
 
-            adar_kont += 1
             circ_nd_bereziekin.append((int(nodoak[1]), int(nodoak[0])))
-            adar_inprimatzeko.append(
-                f"\t{adar_kont}. branch:\t{elem_izena}_bc\t\ti{adar_kont}\t\tv{adar_kont} = e{nodoak[1]} - e{nodoak[0]}"
-            )
+            adar_izenak.append(elem_izena + '_bc')
 
         else:
-            adar_kont += 1
             circ_nd_bereziekin.append((int(nodoak[0]), int(nodoak[1])))
-            adar_inprimatzeko.append(
-                f"\t{adar_kont}. branch:\t{elem_izena}\t\ti{adar_kont}\t\tv{adar_kont} = e{nodoak[0]} - e{nodoak[1]}"
-            )
+            adar_izenak.append(elem_izena)
 
+    circ_nd_bereziekin = np.array(circ_nd_bereziekin, dtype=int)
+    nodo_zerrenda = np.array(sorted(set(cir_nd.flatten())))
     elem_zenb = len(cir_el)
-    nodo_zerrenda = sorted(set(cir_nd.flatten()))
-    nodo_zenb = len(nodo_zerrenda)
 
-    aldagaien_zerrenda = []
-    for nodoa in nodo_zerrenda:
-        if nodoa != 0:
-            aldagaien_zerrenda.append(f"e{nodoa}")
-    for i in range(1, adar_kont + 1):
-        aldagaien_zerrenda.append(f"i{i}")
-    for i in range(1, adar_kont + 1):
-        aldagaien_zerrenda.append(f"v{i}")
+    nodoak_string = "[" + " ".join(str(i) for i in nodo_zerrenda) + "]"
 
-    print(f"{elem_zenb} Elements")
-    print(f"{nodo_zenb} Different nodes: {np.array(nodo_zerrenda)}")
+    print(str(elem_zenb) + ' Elements')
+    print(str(len(nodo_zerrenda)) + ' Different nodes: ' + nodoak_string)
     print("")
-    print(f"{adar_kont} Branches: ")
-    for lerroa in adar_inprimatzeko:
-        print(lerroa)
-    print("")
-    print(f"{len(aldagaien_zerrenda)} variables: ")
-    print(", ".join(aldagaien_zerrenda))
-    print("")
+    print("" + str(len(adar_izenak)) + " Branches: ")
+
+    for i in range(1, len(adar_izenak)+1):
+        indent = 12
+        string = ("	" + str(i) + ". branch:	" +
+                  str(adar_izenak[i-1]) + "i".rjust(indent - len(adar_izenak[i-1])) +
+                  str(i) + "v".rjust(indent - len(str(i))) + str(i) +
+                  " = e" + str(circ_nd_bereziekin[i-1, 0]) +
+                  " - e" + str(circ_nd_bereziekin[i-1, 1]))
+        print(string)
+    print("")    
+    print("" + str(2*len(adar_izenak) + (len(nodo_zerrenda)-1)) + " variables: ")
+
+    for nodoa in nodo_zerrenda[1:]:
+        print("e" + str(nodoa) + ", ", end="", flush=True)
+    for i in range(len(adar_izenak)):
+        print("i" + str(i+1) + ", ", end="", flush=True)
+    for i in range(len(adar_izenak)-1):
+        print("v" + str(i+1) + ", ", end="", flush=True)
+    print("v" + str(len(adar_izenak)))
 
     return circ_nd_bereziekin, nodo_zerrenda
 
@@ -322,7 +322,7 @@ def run_tr(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, s
 
     aurreko_sol = None
 
-    with open(irteera_izena, 'w') as fitx:
+    with open(irteera_izena, 'w', newline='\n') as fitx:
         print(zl2.build_csv_header('t', b, n), file=fitx)
 
         if pausoa > 0:
@@ -345,24 +345,28 @@ def run_tr(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, s
 
 
 def run_file(filename):
-    try:
-        cir_el, cir_nd, cir_val, cir_ctrl = zl1.cir_parser(filename)
-    except IndexError:
-        return zl3.run_file(filename)
-    except ValueError:
-        return zl3.run_file(filename)
-
-    cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodoak = zl3.expand_for_p3(
-        cir_el, cir_nd, cir_val, cir_ctrl
-    )
-
-    if not has_dynamic(cir_elx):
-        return zl3.run_file(filename)
-
     irteera_bufferra = io.StringIO()
 
     try:
         with contextlib.redirect_stdout(irteera_bufferra):
+            try:
+                cir_el, cir_nd, cir_val, cir_ctrl = zl1.cir_parser(filename)
+            except IndexError:
+                return zl3.run_file(filename)
+            except ValueError:
+                return zl3.run_file(filename)
+            except SystemExit as errorea:
+                print(str(errorea), file=irteera_bufferra)
+                testua = irteera_bufferra.getvalue()
+                zl2.save_output_text(filename, testua)
+                return
+
+            cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodoak = zl3.expand_for_p3(
+                cir_el, cir_nd, cir_val, cir_ctrl
+            )
+
+            if not has_dynamic(cir_elx):
+                return zl3.run_file(filename)
 
             zl2.check_integrity(cir_elx, cir_ndx, cir_valx, nodoak)
             analisiak = zl2.parse_analyses(filename)
@@ -370,6 +374,7 @@ def run_file(filename):
             if not analisiak:
                 circ_nd_bereziekin, nodo_zerrenda = print_cir_info_p4(cir_el, cir_nd)
                 Aa = zl1.incidence_matrix(circ_nd_bereziekin, nodo_zerrenda)
+                print("")
                 print("Incidence Matrix: ")
                 print(Aa)
 
@@ -380,6 +385,7 @@ def run_file(filename):
                     if komandoa == '.PR':
                         circ_nd_bereziekin, nodo_zerrenda = print_cir_info_p4(cir_el, cir_nd)
                         Aa = zl1.incidence_matrix(circ_nd_bereziekin, nodo_zerrenda)
+                        print("")
                         print("Incidence Matrix: ")
                         print(Aa)
 
@@ -406,15 +412,13 @@ def run_file(filename):
     except SystemExit as errorea:
         print(str(errorea), file=irteera_bufferra)
         testua = irteera_bufferra.getvalue()
-        output_file = zl2.save_output_text(filename, testua)
+        zl2.save_output_text(filename, testua)
         print(testua, end='')
-        print("Archivo OUTPUT guardado en:", output_file)
         return
 
     testua = irteera_bufferra.getvalue()
-    output_file = zl2.save_output_text(filename, testua)
+    zl2.save_output_text(filename, testua)
     print(testua, end='')
-    print("Archivo OUTPUT guardado en:", output_file)
 
 
 if __name__ == "__main__":
@@ -425,3 +429,4 @@ if __name__ == "__main__":
         filename = os.path.join(base_dir, "cirs", "all", "3_zlel_RC.cir")
 
     run_file(filename)
+

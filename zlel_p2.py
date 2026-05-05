@@ -292,37 +292,42 @@ def solve_tableau(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, tr_mode=False, t
 
 
 def print_solution(sol, b, n):
+    """ This function prints the solution with format.
+
+        Args:
+            | sol: np array with the solution of the Tableau equations
+            | (e_1,..,e_n-1,v_1,..,v_b,i_1,..i_b)
+            | b: # of branches
+            | n: # of nodes
+
+    """
+
+    # The instructor solution needs to be a numpy array of numpy arrays of
+    # float. If it is not, convert it to this format.
     if sol.dtype == np.float64:
-        tmp = np.zeros((np.size(sol), 1), dtype=float)
-        for i in range(np.size(sol)):
-            tmp[i] = np.array(sol[i])
+        np.set_printoptions(sign=' ')  # Only from numpy 1.14
+        tmp = np.zeros([np.size(sol), 1], dtype=float)
+        for ind in range(np.size(sol)):
+            tmp[ind] = np.array(sol[ind])
         sol = tmp
 
-    tolerantzia = 1e-9
-
+    tolerance = -1e-9  # Adjust as needed
     print("\n========== Nodes voltage to reference ========")
     for i in range(1, n):
-        balioa = sol[i - 1][0]
-        if abs(balioa) < tolerantzia:
-            balioa = 0.0
-        print("e" + str(i) + " = ", "[{:10.9f}]".format(balioa))
-
+        value = sol[i-1][0]
+        print("e" + str(i) + " = ", "[{:10.9f}]".format(0.0 if value <= 0 and 
+                                                value >= tolerance else value))
     print("\n========== Branches voltage difference ========")
-    for i in range(1, b + 1):
-        balioa = sol[i + n - 2][0]
-        if abs(balioa) < tolerantzia:
-            balioa = 0.0
-        print("v" + str(i) + " = ", "[{:10.9f}]".format(balioa))
-
+    for i in range(1, b+1):
+        value = sol[i+n-2][0]
+        print("v" + str(i) + " = ", "[{:10.9f}]".format(0.0 if value <= 0 and 
+                                                value >= tolerance else value))
     print("\n=============== Branches currents ==============")
-    for i in range(1, b + 1):
-        balioa = sol[i + b + n - 2][0]
-        if abs(balioa) < tolerantzia:
-            balioa = 0.0
-        print("i" + str(i) + " = ", "[{:10.9f}]".format(balioa))
-
+    for i in range(1, b+1):
+        value = sol[i+b+n-2][0]
+        print("i" + str(i) + " = ", "[{:10.9f}]".format(0.0 if value <= 0 and 
+                                                value >= tolerance else value))
     print("\n================= End solution =================\n")
-
 
 def build_csv_header(first_label, b, n):
     goiburua = first_label
@@ -362,7 +367,7 @@ def save_output_text(filename, text):
     os.makedirs(outputs_karpeta, exist_ok=True)
 
     oin_izena = os.path.splitext(os.path.basename(filename))[0]
-    irteera_izena = os.path.join(outputs_karpeta, oin_izena + '.txt')
+    irteera_izena = os.path.join(outputs_karpeta, oin_izena + '.out')
 
     with open(irteera_izena, 'w', encoding='utf-8') as fitx:
         fitx.write(text)
@@ -395,7 +400,7 @@ def run_dc(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, s
     if pausoa == 0:
         sys.exit('DC step cannot be zero.')
 
-    with open(irteera_izena, 'w') as fitx:
+    with open(irteera_izena, 'w', newline='\n') as fitx:
         print(build_csv_header(lehen_label, b, n), file=fitx)
 
         if pausoa > 0:
@@ -427,7 +432,7 @@ def run_tr(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, s
     if pausoa == 0:
         sys.exit('TR step cannot be zero.')
 
-    with open(irteera_izena, 'w') as fitx:
+    with open(irteera_izena, 'w', newline='\n') as fitx:
         print(build_csv_header('t', b, n), file=fitx)
 
         if pausoa > 0:
@@ -467,58 +472,69 @@ def run_file(filename):
                 Aa = zl1.incidence_matrix(circ_nd, nodoak0)
 
                 if zl1.matrizea_ondo(Aa):
+                    print("")
                     print('Incidence Matrix :')
                     print(Aa)
                 else:
                     print('intzidentzia matrizea ez da zuzena')
 
             else:
+                pr_flag = False
+                op_flag = False
+                dc_zerrenda = []
+                tr_zerrenda = []
+
                 for analisia in analisiak:
                     komandoa = analisia[0].upper()
-
                     if komandoa == '.PR':
-                        b0, n0, nodoak0, el_num = zl1.get_circuit_info(cir_el, cir_nd)
-                        circ_nd = zl1.print_cir_info(cir_el, cir_nd, b0, n0, nodoak0, el_num)
-                        Aa = zl1.incidence_matrix(circ_nd, nodoak0)
-
-                        if zl1.matrizea_ondo(Aa):
-                            print('Incidence Matrix :')
-                            print(Aa)
-                        else:
-                            print('intzidentzia matrizea ez da zuzena')
-
+                        pr_flag = True
                     elif komandoa == '.OP':
-                        sol = solve_tableau(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodoak, tr_mode=False, t=0.0)
-                        print_solution(sol, len(cir_elx), len(nodoak))
-
+                        op_flag = True
                     elif komandoa == '.DC':
-                        run_dc(
-                            cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodoak,
-                            filename, analisia[5], analisia[6], analisia[7], analisia[8]
-                        )
-
+                        dc_zerrenda.append(analisia)
                     elif komandoa == '.TR':
-                        run_tr(
-                            cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodoak,
-                            filename, analisia[5], analisia[6], analisia[7]
-                        )
-
+                        tr_zerrenda.append(analisia)
                     else:
                         sys.exit(f'Analysis {analisia[0]} not supported.')
+
+                if pr_flag:
+                    b0, n0, nodoak0, el_num = zl1.get_circuit_info(cir_el, cir_nd)
+                    circ_nd = zl1.print_cir_info(cir_el, cir_nd, b0, n0, nodoak0, el_num)
+                    Aa = zl1.incidence_matrix(circ_nd, nodoak0)
+
+                    if zl1.matrizea_ondo(Aa):
+                        print("")
+                        print('Incidence Matrix :')
+                        print(Aa)
+                    else:
+                        print('intzidentzia matrizea ez da zuzena')
+
+                if op_flag:
+                    sol = solve_tableau(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodoak, tr_mode=False, t=0.0)
+                    print_solution(sol, len(cir_elx), len(nodoak))
+
+                for analisia in dc_zerrenda:
+                    run_dc(
+                        cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodoak,
+                        filename, analisia[5], analisia[6], analisia[7], analisia[8]
+                    )
+
+                for analisia in tr_zerrenda:
+                    run_tr(
+                        cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodoak,
+                        filename, analisia[5], analisia[6], analisia[7]
+                    )
 
     except SystemExit as errorea:
         print(str(errorea), file=irteera_bufferra)
         testua = irteera_bufferra.getvalue()
-        output_file = save_output_text(filename, testua)
+        save_output_text(filename, testua)
         print(testua, end='')
-        print("Archivo OUTPUT guardado en:", output_file)
         return
 
     testua = irteera_bufferra.getvalue()
-    output_file = save_output_text(filename, testua)
+    save_output_text(filename, testua)
     print(testua, end='')
-    print("Archivo OUTPUT guardado en:", output_file)
-
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:

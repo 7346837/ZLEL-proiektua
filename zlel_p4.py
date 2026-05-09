@@ -307,6 +307,8 @@ def solve_BE_or_NR(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, h, aurreko_sol=
     sys.exit('Error: Newton-Raphson did not converge.')
 
 
+
+
 def run_tr(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, step):
     irteera_izena = zl2.save_sim_output(filename, '.tr')
 
@@ -429,4 +431,3 @@ if __name__ == "__main__":
         filename = os.path.join(base_dir, "cirs", "all", "3_zlel_RC.cir")
 
     run_file(filename)
-

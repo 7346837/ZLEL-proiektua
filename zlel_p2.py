@@ -4,6 +4,7 @@ import math
 import io
 import contextlib
 import numpy as np
+import matplotlib.pyplot as plt
 
 if __name__ == "zlel.zlel_p2":
     import zlel.zlel_p1 as zl1
@@ -329,36 +330,103 @@ def print_solution(sol, b, n):
                                                 value >= tolerance else value))
     print("\n================= End solution =================\n")
 
-def build_csv_header(first_label, b, n):
-    goiburua = first_label
 
+def build_csv_header(tvi, b, n):
+    """ This function build the csv header for the output files.
+        First column will be v or i if .dc analysis or t if .tr and it will
+        be given by argument tvi.
+        The header will be this form,
+        t/v/i,e_1,..,e_n-1,v_1,..,v_b,i_1,..i_b
+
+    Args:
+        | tvi: "v" or "i" if .dc analysis or "t" if .tran
+        | b: # of branches
+        | n: # of nodes
+
+    Returns:
+        header: The header in csv format as string
+    """
+    header = tvi
     for i in range(1, n):
-        goiburua += ',e' + str(i)
-
-    for i in range(1, b + 1):
-        goiburua += ',v' + str(i)
-
-    for i in range(1, b + 1):
-        goiburua += ',i' + str(i)
-
-    return goiburua
+        header += ",e" + str(i)
+    for i in range(1, b+1):
+        header += ",v" + str(i)
+    for i in range(1, b+1):
+        header += ",i" + str(i)
+    return header
 
 
 def get_project_root():
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def save_sim_output(filename, extension):
-    proiektu_erroa = get_project_root()
-    sims_karpeta = os.path.join(proiektu_erroa, 'sims')
-    os.makedirs(sims_karpeta, exist_ok=True)
+def save_sim_output(filename, sims_folder_name="sims", extension=None):
+    """ This function creates an absolute path to a filename inserting
+        a folder given by "sims_folder_name" and changing its extension
+        by another given by "extension" (. needs to be included).
 
-    oin_izena = os.path.splitext(os.path.basename(filename))[0]
-    return os.path.join(sims_karpeta, oin_izena + extension)
+        It can be called as:
+        | save_sim_output(filename, extension)
+        | save_sim_output(filename, sims_folder_name, extension)
+    """
 
+    if extension is None:
+        extension = sims_folder_name
+        sims_folder_name = "sims"
+
+    if not os.path.exists(filename):
+        return
+
+    filename = os.path.abspath(filename)
+    dir_path = os.path.dirname(filename)
+    base_name, ext = os.path.splitext(os.path.basename(filename))
+    new_dir_path = os.path.join(dir_path, sims_folder_name)
+
+    try:
+        if not os.path.exists(new_dir_path):
+            os.makedirs(new_dir_path)
+    except OSError:
+        return
+
+    new_filename = f"{base_name}{extension}"
+    new_file_path = os.path.join(new_dir_path, new_filename)
+    return new_file_path
 
 def solution_row(sol):
     return ','.join('{:.9f}'.format(float(x[0])) for x in sol)
+
+
+def save_as_csv(b, n, filename):
+    """ This function generates a csv file with the name filename.
+        First it will save a header and then, it loops and save a line in
+        csv format into the file.
+    """
+    header = build_csv_header("t", b, n)
+    with open(filename, 'w', newline='\n') as file:
+        print(header, file=file)
+        t = 0
+        while t <= 10:
+            sol = np.full(2*b+(n-1), t+1, dtype=float)
+            sol = np.insert(sol, 0, t)
+            sol_csv = ','.join(['%.9f' % num for num in sol])
+            print(sol_csv, file=file)
+            t = round(t + 1, 10)
+
+
+def plot_from_cvs(filename, x, y, title):
+    """ This function plots the values corresponding to the x string of the
+        file filename in the x-axis and the ones corresponding to the y
+        string in the y-axis.
+    """
+    data = np.genfromtxt(filename, delimiter=',', skip_header=0,
+                         skip_footer=1, names=True)
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    ax1.plot(data[x], data[y], color='r', label=title)
+    ax1.set_xlabel(x)
+    ax1.set_ylabel(y)
+    plt.show()
 
 
 def save_output_text(filename, text):
@@ -388,7 +456,7 @@ def run_dc(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, s
 
     elem_mota = cir_elx[iturri_indizea][0][0].upper()
     lehen_label = 'V' if elem_mota in ('V', 'B', 'E', 'H') else 'I'
-    irteera_izena = save_sim_output(filename, '_' + source_name + '.dc')
+    irteera_izena = save_sim_output(filename, 'sims', '_' + source_name + '.dc')
 
     b = len(cir_elx)
     n = len(nodes)
@@ -420,7 +488,7 @@ def run_dc(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, s
 
 
 def run_tr(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, step):
-    irteera_izena = save_sim_output(filename, '.tr')
+    irteera_izena = save_sim_output(filename, 'sims', '.tr')
 
     b = len(cir_elx)
     n = len(nodes)
@@ -536,6 +604,7 @@ def run_file(filename):
     save_output_text(filename, testua)
     print(testua, end='')
 
+
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         FILENAME = sys.argv[1]
@@ -544,3 +613,4 @@ if __name__ == '__main__':
         FILENAME = os.path.join(base_dir, '..', 'cirs', 'all', '1_zlel_V_R_op_dc.cir')
 
     run_file(FILENAME)
+

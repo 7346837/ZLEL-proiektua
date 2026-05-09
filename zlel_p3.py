@@ -401,6 +401,8 @@ def solve_linear_or_NR(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, tr_mode=Fal
     sys.exit('Error: Newton-Raphson did not converge.')
 
 
+
+
 def run_dc(cir_elx, cir_ndx, cir_valx, cir_ctrlx, nodes, filename, start, end, step, source_name):
     iturri_indizea = None
 
@@ -559,4 +561,3 @@ if __name__ == "__main__":
         filename = os.path.join(base_dir, '..', 'cirs', 'all', '2_zlel_1D.cir')
 
     run_file(filename)
-

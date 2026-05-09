@@ -12,7 +12,7 @@ import zlel_p4 as zl4
 
 def run_all_circuits():
     base_dir = os.path.dirname(__file__)
-    cir_folder = os.path.join(base_dir, "cirs", "all")
+    cir_folder = os.path.join(base_dir, "cirs")
 
     cir_files = sorted(
         f for f in os.listdir(cir_folder) if f.endswith(".cir")
